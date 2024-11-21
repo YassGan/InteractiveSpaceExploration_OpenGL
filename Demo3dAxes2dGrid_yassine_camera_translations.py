@@ -75,27 +75,34 @@ class Example(Base):
     def update(self):
         # Handle main character movement input
         if self.input.is_key_pressed('up'):
-            self.character_position[2] -= 0.1  # Move forward
+            self.character_position[2] -= 0.1  # Move forward along the Z axis
         elif self.input.is_key_pressed('down'):
-            self.character_position[2] += 0.1  # Move backward
+            self.character_position[2] += 0.1  # Move backward along the Z axis
         if self.input.is_key_pressed('left'):
-            self.character_position[0] -= 0.1  # Move left
+            self.character_position[0] -= 0.1  # Move left along the X axis
         elif self.input.is_key_pressed('right'):
-            self.character_position[0] += 0.1  # Move right
+            self.character_position[0] += 0.1  # Move right along the X axis
+        if self.input.is_key_pressed('i'):
+            self.character_position[1] += 0.1  # Move up along the Y axis
+        elif self.input.is_key_pressed('o'):
+            self.character_position[1] -= 0.1  # Move down along the Y axis
 
-        # Time-based oscillation for character's floating effect
+        # Time-based oscillation for character's floating effect on all axes
         elapsed_time = time.time() - self.time_start
         oscillation_amplitude = 0.007
         oscillation_speed = 2.0
+
+        # Floating offset on all three axes (X, Y, Z)
         floating_offset = [
-            oscillation_amplitude * math.sin(oscillation_speed * elapsed_time),  # Horizontal oscillation
-            oscillation_amplitude * math.sin(oscillation_speed * elapsed_time),  # Vertical oscillation
-            0
+            oscillation_amplitude * math.sin(oscillation_speed * elapsed_time),  # Horizontal oscillation (X-axis)
+            oscillation_amplitude * math.sin(oscillation_speed * elapsed_time),  # Vertical oscillation (Y-axis)
+            oscillation_amplitude * math.sin(oscillation_speed * elapsed_time)   # Depth oscillation (Z-axis)
         ]
 
         # Apply oscillation to the character's position
         self.character_position[0] += floating_offset[0]  # Apply the horizontal oscillation (X-axis)
         self.character_position[1] += floating_offset[1]  # Apply the vertical oscillation (Y-axis)
+        self.character_position[2] += floating_offset[2]  # Apply the depth oscillation (Z-axis)
 
         # Update the character's position
         self.character.set_position(self.character_position)
