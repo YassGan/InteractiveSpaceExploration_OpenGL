@@ -69,18 +69,34 @@ class Example(Base):
         grid.rotate_x(-math.pi / 2)
         self.scene.add(grid)
 
-        # Planets setup (Add two larger planets)
+        # Planets setup (Using real-world names and scaled textures)
         self.planets = []  # Store the planets for easy manipulation
-        self.planet_distances = [120, 30]  # Increased distances of planets from the character (in Z-axis)
-        self.planet_sizes = [5, 10]  # Increased sizes of the planets (larger than the box)
-        self.planet_orbits = [0.01, 0.005]  # Orbital speed (rotation speed)
+
+        # Scaling factor: 1 unit = ~1 million km (scaled down for better visualization)
+        self.planet_distances = [15, 22, 30, 40, 5, 60]  # Distances for Venus, Earth, Mars, Jupiter, Moon, Sun
+        self.planet_sizes = [1.0, 1.0, 0.5, 3.5, 0.27, 10]  # Scaled sizes for Venus, Earth, Mars, Jupiter, Moon, Sun
+        self.planet_orbits = [0.01, 0.01, 0.008, 0.005, 0.1, 0.002]  # Orbital speed for each planet
         
+        # Planet names and their textures (files should exist in your project directory)
+        self.planet_textures = {
+            "venus": "venus.jpg",
+            "earth": "earth.jpg",
+            "mars": "mars.jpg",
+            "jupiter": "jupiter.jpg",
+            "moon": "moon.jpg",
+            "sun": "sun.jpg"
+        }
+
         # Create planets and add them to the scene
-        for i in range(2):
+        for i, planet_name in enumerate(self.planet_textures.keys()):
             planet_geometry = SphereGeometry(radius=self.planet_sizes[i])
-            planet_material = TextureMaterial(texture=Texture(file_name=f"planet{i+1}.jpg"))  # Use different textures
+            planet_material = TextureMaterial(texture=Texture(file_name=self.planet_textures[planet_name]))  # Use the texture based on the planet's name
             planet = Mesh(planet_geometry, planet_material)
-            planet.set_position([self.planet_distances[i], 0, 0])  # Initial position in orbit
+            
+            # Set planet initial position (planets orbit around the sun in the XZ plane)
+            x_pos = self.planet_distances[i] * math.cos(i)  # Using math.cos to spread planets evenly in the X direction
+            z_pos = self.planet_distances[i] * math.sin(i)  # Using math.sin to spread planets evenly in the Z direction
+            planet.set_position([x_pos, 0, z_pos])  # Initial position in orbit
             self.planets.append(planet)
             self.scene.add(planet)
 
@@ -89,7 +105,7 @@ class Example(Base):
 
     def update(self):
         # Handle the movement of the character based on keyboard input
-        move_speed = 0.2
+        move_speed = 0.08
 
         if self.input.is_key_pressed('i'):
             self.character_position[1] -= move_speed  # Move character forward (on the Z-axis)
