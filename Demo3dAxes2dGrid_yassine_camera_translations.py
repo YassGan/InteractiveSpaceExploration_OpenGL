@@ -41,11 +41,11 @@ class Example(Base):
         self.rig.set_position([0, 4, 15])
 
         # Create the main character box (shipping box)
-        width, height, depth = 1, 1, 1  # Set the dimensions of the box
+        width, height, depth = 0.05, 0.05, 0.05  # Set the dimensions of the box
         material = SurfaceMaterial(property_dict={"useVertexColors": True})
        
         # Position for the main character box
-        self.character_position = [0, 0, 0]  # Initial position of the main character
+        self.character_position = [29.0, -60, 157.0]  # Initial position of the main character
         geometry = BoxGeometry(width, height, depth)
         self.character = Mesh(geometry, material)
         self.character.set_position(self.character_position)
@@ -53,21 +53,21 @@ class Example(Base):
 
         # Skybox setup
         sky_geometry = SphereGeometry(radius=550)  # Increased radius for the skybox
-        sky_material = TextureMaterial(texture=Texture(file_name="skyy2.jpg"))  # Load the sky texture
+        sky_material = TextureMaterial(texture=Texture(file_name="skyy4.jpg"))  # Load the sky texture
         self.sky = Mesh(sky_geometry, sky_material)
         self.sky.set_position([0, 0, 0])  # Center the skysphere
         self.scene.add(self.sky)  # Add the skysphere to the scene
 
-        # Add axes and grid helpers
-        axes = AxesHelper(axis_length=8)
-        self.scene.add(axes)
-        grid = GridHelper(
-            size=100,
-            grid_color=[1, 1, 1],
-            center_color=[1, 1, 0]
-        )
-        grid.rotate_x(-math.pi / 2)
-        self.scene.add(grid)
+        # # Add axes and grid helpers
+        # axes = AxesHelper(axis_length=8)
+        # self.scene.add(axes)
+        # grid = GridHelper(
+        #     size=100,
+        #     grid_color=[1, 1, 1],
+        #     center_color=[1, 1, 0]
+        # )
+        # grid.rotate_x(-math.pi / 2)
+        # self.scene.add(grid)
 
         # Planets setup (Using real-world names and scaled textures)
         self.planets = []  # Store the planets for easy manipulation
@@ -81,49 +81,75 @@ class Example(Base):
         self.planet_textures = {
             "venus": "venus.jpg",
             "earth": "earth.jpg",
+                        "moon": "moon.jpg",
+
             "mars": "mars.jpg",
             "jupiter": "jupiter.jpg",
-            "moon": "moon.jpg",
             "sun": "sun.jpg"
         }
 
         # Create planets and add them to the scene
         for i, planet_name in enumerate(self.planet_textures.keys()):
-            planet_geometry = SphereGeometry(radius=self.planet_sizes[i])
+            planet_geometry = SphereGeometry(radius=self.planet_sizes[i]*1.2)
             planet_material = TextureMaterial(texture=Texture(file_name=self.planet_textures[planet_name]))  # Use the texture based on the planet's name
             planet = Mesh(planet_geometry, planet_material)
             
             # Set planet initial position (planets orbit around the sun in the XZ plane)
-            x_pos = self.planet_distances[i] * math.cos(i)  # Using math.cos to spread planets evenly in the X direction
-            z_pos = self.planet_distances[i] * math.sin(i)  # Using math.sin to spread planets evenly in the Z direction
+            x_pos =1.2* self.planet_distances[i] * math.cos(i)  # Using math.cos to spread planets evenly in the X direction
+            z_pos = 1.2*self.planet_distances[i] * math.sin(i)  # Using math.sin to spread planets evenly in the Z direction
             planet.set_position([x_pos, 0, z_pos])  # Initial position in orbit
             self.planets.append(planet)
             self.scene.add(planet)
 
         # Maintain the current position of the rig (camera)
-        self.camera_offset = [0, 4, 15]  # Camera offset to follow the character
+            self.camera_offset = [0, 0.1, 0.5]  # Camera offset is now closer to the character
+
+
+
+        self.accelerate = 0.9
+        self.move_speed = 0.50
+
 
     def update(self):
+
+
+
+
         # Handle the movement of the character based on keyboard input
-        move_speed = 0.08
+
+
+
+
+
+
+                # Handle the movement of the character based on keyboard input
+        if self.input.is_key_pressed('r'):
+            self.accelerate = 2  # Increase the speed by 100 when 'r' is pressed
+            print(f"Speed increased to {self.accelerate}")  # Print the updated speed for debugging
+        else:
+            self.accelerate = 1  # Reset the acceleration to 1 when 'r' is not pressed
+            print(f"Speed set to normal ({self.accelerate})")  # Print the normal speed for debugging
+
+
+
 
         if self.input.is_key_pressed('i'):
-            self.character_position[1] -= move_speed  # Move character forward (on the Z-axis)
+            self.character_position[1] -= self.move_speed*self.accelerate  # Move character forward (on the Z-axis)
         elif self.input.is_key_pressed('o'):
-            self.character_position[1] += move_speed  # Move character backward (on the Z-axis)
+            self.character_position[1] += self.move_speed*self.accelerate  # Move character backward (on the Z-axis)
 
         if self.input.is_key_pressed('left'):
-            self.character_position[0] -= move_speed  # Move character left (on the X-axis)
+            self.character_position[0] -= self.move_speed*self.accelerate  # Move character left (on the X-axis)
         elif self.input.is_key_pressed('right'):
-            self.character_position[0] += move_speed  # Move character right (on the X-axis)
+            self.character_position[0] += self.move_speed*self.accelerate  # Move character right (on the X-axis)
 
         # When 'z' is pressed, increase the position along the blue axis (Z-axis)
         if self.input.is_key_pressed('down'):
-            self.character_position[2] += move_speed  # Move the character up the blue axis (positive Z)
+            self.character_position[2] += self.move_speed*self.accelerate  # Move the character up the blue axis (positive Z)
 
         # When 's' is pressed, decrease the position along the blue axis (Z-axis)
         elif self.input.is_key_pressed('up'):
-            self.character_position[2] -= move_speed  # Move the character down the blue axis (negative Z)
+            self.character_position[2] -= self.move_speed*self.accelerate  # Move the character down the blue axis (negative Z)
 
         # Update the position of the main character box
         self.character.set_position(self.character_position)
@@ -138,13 +164,13 @@ class Example(Base):
 
         # Update planets' positions to simulate orbital motion and their rotation on their own axis
         for i, planet in enumerate(self.planets):
-            # Update the orbital position
+            # Update the orbital position using the orbital speed
             angle = self.planet_orbits[i] * self.delta_time  # Adjust the speed with delta_time
             new_x = self.planet_distances[i] * math.cos(angle)  # Orbital motion on X-axis
             new_z = self.planet_distances[i] * math.sin(angle)  # Orbital motion on Z-axis
             planet.set_position([new_x, 0, new_z])  # Update position in orbit
             
-            # Add self-rotation (planet rotating on its own axis)
+            # Optional: Add self-rotation (planet rotating on its own axis) if you want it
             planet.rotate_y(self.planet_orbits[i] * 100 * self.delta_time)  # Rotate around Y-axis for spinning effect
 
         # Update the rig and render the scene
