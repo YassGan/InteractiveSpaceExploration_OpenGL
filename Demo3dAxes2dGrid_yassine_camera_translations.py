@@ -1,7 +1,8 @@
 import math
 import pathlib
 import sys
-import pygame  # Import Pygame for mouse input handling
+import pygame
+import random
 
 # Get the package directory
 package_dir = str(pathlib.Path(__file__).resolve().parents[2])
@@ -15,16 +16,14 @@ from py3d.core_ext.mesh import Mesh
 from py3d.core_ext.renderer import Renderer
 from py3d.core_ext.scene import Scene
 from py3d.geometry.box import BoxGeometry
-from py3d.geometry.sphere import SphereGeometry  # Import SphereGeometry for planets
+from py3d.geometry.sphere import SphereGeometry
 from py3d.material.surface import SurfaceMaterial
-from py3d.material.texture import TextureMaterial  # Import TextureMaterial
-from py3d.core_ext.texture import Texture  # Import Texture for loading images
-from py3d.extras.axes import AxesHelper
-from py3d.extras.grid import GridHelper
+from py3d.material.texture import TextureMaterial
+from py3d.core_ext.texture import Texture
 from py3d.extras.movement_rig import MovementRig
 
 class Example(Base):
-    """ Render a main character box with camera control, sky, and planets. """
+    """ Render a main character box with camera control, sky, planets, and random moving boxes. """
     
     def initialize(self):
         print("Initializing program...")
@@ -32,7 +31,6 @@ class Example(Base):
         self.scene = Scene()
         self.camera = Camera(aspect_ratio=1100 / 700)
         
-        # Initialize Pygame for mouse handling
         pygame.init()
 
         # Setup the movement rig for the camera
@@ -41,141 +39,178 @@ class Example(Base):
         self.rig.set_position([0, 4, 15])
 
         # Create the main character box (shipping box)
-        width, height, depth = 0.05, 0.05, 0.05  # Set the dimensions of the box
+        width, height, depth = 0.05, 0.05, 0.05
         material = SurfaceMaterial(property_dict={"useVertexColors": True})
        
-        # Position for the main character box
-        self.character_position = [29.0, -60, 157.0]  # Initial position of the main character
+        self.character_position = [29.0, -60, 157.0]
         geometry = BoxGeometry(width, height, depth)
         self.character = Mesh(geometry, material)
         self.character.set_position(self.character_position)
         self.scene.add(self.character)
 
-        # Skybox setup
-        sky_geometry = SphereGeometry(radius=550)  # Increased radius for the skybox
-        sky_material = TextureMaterial(texture=Texture(file_name="skyy4.jpg"))  # Load the sky texture
-        self.sky = Mesh(sky_geometry, sky_material)
-        self.sky.set_position([0, 0, 0])  # Center the skysphere
-        self.scene.add(self.sky)  # Add the skysphere to the scene
-
-        # # Add axes and grid helpers
-        # axes = AxesHelper(axis_length=8)
-        # self.scene.add(axes)
-        # grid = GridHelper(
-        #     size=100,
-        #     grid_color=[1, 1, 1],
-        #     center_color=[1, 1, 0]
-        # )
-        # grid.rotate_x(-math.pi / 2)
-        # self.scene.add(grid)
-
-        # Planets setup (Using real-world names and scaled textures)
-        self.planets = []  # Store the planets for easy manipulation
-
-        # Scaling factor: 1 unit = ~1 million km (scaled down for better visualization)
-        self.planet_distances = [15, 22, 30, 40, 5, 60]  # Distances for Venus, Earth, Mars, Jupiter, Moon, Sun
-        self.planet_sizes = [1.0, 1.0, 0.5, 3.5, 0.27, 10]  # Scaled sizes for Venus, Earth, Mars, Jupiter, Moon, Sun
-        self.planet_orbits = [0.01, 0.01, 0.008, 0.005, 0.1, 0.002]  # Orbital speed for each planet
+        # Add random moving boxes
+        self.moving_boxes = []
+        self.box_positions = []
+        self.box_velocities = []
+        self.box_rotations = []
         
-        # Planet names and their textures (files should exist in your project directory)
+        # Create 20 random moving boxes
+        for _ in range(150):
+            # Random size for each box
+            box_size = random.uniform(0.2, 1.0)
+            box_geometry = BoxGeometry(box_size, box_size, box_size)
+            
+            # Random color for each box - simplified material properties
+            box_color = [random.random(), random.random(), random.random()]
+            box_material = SurfaceMaterial(property_dict={
+                "baseColor": box_color,
+                "useVertexColors": False
+            })
+            
+            box = Mesh(box_geometry, box_material)
+            
+            # Random initial position
+            pos = [
+                random.uniform(-100, 100),
+                random.uniform(-100, 100),
+                random.uniform(-100, 100)
+            ]
+            box.set_position(pos)
+            
+            # Random velocity for movement
+            velocity = [
+                random.uniform(-0.5, 0.5),
+                random.uniform(-0.5, 0.5),
+                random.uniform(-0.5, 0.5)
+            ]
+            
+            # Random rotation speeds
+            rotation = [
+                random.uniform(-0.02, 0.02),
+                random.uniform(-0.02, 0.02),
+                random.uniform(-0.02, 0.02)
+            ]
+            
+            self.moving_boxes.append(box)
+            self.box_positions.append(pos)
+            self.box_velocities.append(velocity)
+            self.box_rotations.append(rotation)
+            self.scene.add(box)
+
+        # Skybox setup
+        sky_geometry = SphereGeometry(radius=550)
+        sky_material = TextureMaterial(texture=Texture(file_name="skky.png"))
+        self.sky = Mesh(sky_geometry, sky_material)
+        self.sky.set_position([0, 0, 0])
+        self.scene.add(self.sky)
+
+        # Planets setup
+        self.planets = []
+
+        # Scaling factors
+        self.planet_distances = [15, 22, 30, 40, 5, 60]  # Distances for Venus, Earth, Mars, Jupiter, Moon, Sun
+        self.planet_sizes = [1.0, 1.0, 0.5, 3.5, 0.27, 10]  # Scaled sizes
+        self.planet_orbits = [0.01, 0.01, 0.008, 0.005, 0.1, 0.002]  # Orbital speeds
+        
+        # Planet textures
         self.planet_textures = {
             "venus": "venus.jpg",
             "earth": "earth.jpg",
-                        "moon": "moon.jpg",
-
+            "moon": "moon.jpg",
             "mars": "mars.jpg",
             "jupiter": "jupiter.jpg",
             "sun": "sun.jpg"
         }
 
-        # Create planets and add them to the scene
+        # Create planets
         for i, planet_name in enumerate(self.planet_textures.keys()):
             planet_geometry = SphereGeometry(radius=self.planet_sizes[i]*1.2)
-            planet_material = TextureMaterial(texture=Texture(file_name=self.planet_textures[planet_name]))  # Use the texture based on the planet's name
+            planet_material = TextureMaterial(texture=Texture(file_name=self.planet_textures[planet_name]))
             planet = Mesh(planet_geometry, planet_material)
             
-            # Set planet initial position (planets orbit around the sun in the XZ plane)
-            x_pos =1.2* self.planet_distances[i] * math.cos(i)  # Using math.cos to spread planets evenly in the X direction
-            z_pos = 1.2*self.planet_distances[i] * math.sin(i)  # Using math.sin to spread planets evenly in the Z direction
-            planet.set_position([x_pos, 0, z_pos])  # Initial position in orbit
+            x_pos = 1.2 * self.planet_distances[i] * math.cos(i)
+            z_pos = 1.2 * self.planet_distances[i] * math.sin(i)
+            planet.set_position([x_pos, 0, z_pos])
             self.planets.append(planet)
             self.scene.add(planet)
 
-        # Maintain the current position of the rig (camera)
-            self.camera_offset = [0, 0.1, 0.5]  # Camera offset is now closer to the character
-
-
-
+        # Camera setup
+        self.camera_offset = [0, 0.1, 0.5]
         self.accelerate = 0.9
         self.move_speed = 0.50
 
-
     def update(self):
+        # Update moving boxes
+        for i, box in enumerate(self.moving_boxes):
+            # Update position based on velocity
+            for j in range(3):
+                self.box_positions[i][j] += self.box_velocities[i][j]
+            
+            # Boundary checking - wrap around
+            for j in range(3):
+                if self.box_positions[i][j] > 100:
+                    self.box_positions[i][j] = -100
+                elif self.box_positions[i][j] < -100:
+                    self.box_positions[i][j] = 100
+            
+            # Apply position
+            box.set_position(self.box_positions[i])
+            
+            # Apply rotation
+            box.rotate_x(self.box_rotations[i][0])
+            box.rotate_y(self.box_rotations[i][1])
+            box.rotate_z(self.box_rotations[i][2])
+            
+            # Random velocity changes
+            if random.random() < 0.01:  # 1% chance each frame
+                for j in range(3):
+                    self.box_velocities[i][j] += random.uniform(-0.1, 0.1)
+                    self.box_velocities[i][j] = max(min(self.box_velocities[i][j], 1.0), -1.0)
 
-
-
-
-        # Handle the movement of the character based on keyboard input
-
-
-
-
-
-
-                # Handle the movement of the character based on keyboard input
+        # Handle speed boost
         if self.input.is_key_pressed('r'):
-            self.accelerate = 2  # Increase the speed by 100 when 'r' is pressed
-            print(f"Speed increased to {self.accelerate}")  # Print the updated speed for debugging
+            self.accelerate = 2
         else:
-            self.accelerate = 1  # Reset the acceleration to 1 when 'r' is not pressed
-            print(f"Speed set to normal ({self.accelerate})")  # Print the normal speed for debugging
+            self.accelerate = 1
 
-
-
-
+        # Character movement
         if self.input.is_key_pressed('i'):
-            self.character_position[1] -= self.move_speed*self.accelerate  # Move character forward (on the Z-axis)
+            self.character_position[1] -= self.move_speed * self.accelerate
         elif self.input.is_key_pressed('o'):
-            self.character_position[1] += self.move_speed*self.accelerate  # Move character backward (on the Z-axis)
+            self.character_position[1] += self.move_speed * self.accelerate
 
         if self.input.is_key_pressed('left'):
-            self.character_position[0] -= self.move_speed*self.accelerate  # Move character left (on the X-axis)
+            self.character_position[0] -= self.move_speed * self.accelerate
         elif self.input.is_key_pressed('right'):
-            self.character_position[0] += self.move_speed*self.accelerate  # Move character right (on the X-axis)
+            self.character_position[0] += self.move_speed * self.accelerate
 
-        # When 'z' is pressed, increase the position along the blue axis (Z-axis)
         if self.input.is_key_pressed('down'):
-            self.character_position[2] += self.move_speed*self.accelerate  # Move the character up the blue axis (positive Z)
-
-        # When 's' is pressed, decrease the position along the blue axis (Z-axis)
+            self.character_position[2] += self.move_speed * self.accelerate
         elif self.input.is_key_pressed('up'):
-            self.character_position[2] -= self.move_speed*self.accelerate  # Move the character down the blue axis (negative Z)
+            self.character_position[2] -= self.move_speed * self.accelerate
 
-        # Update the position of the main character box
+        # Update character position
         self.character.set_position(self.character_position)
 
-        # Update the camera position to follow the character
+        # Update camera position
         camera_position = [
-            self.character_position[0] + self.camera_offset[0],  # Camera follows the character's X
-            self.character_position[1] + self.camera_offset[1],  # Camera follows the character's Y
-            self.character_position[2] + self.camera_offset[2]   # Camera follows the character's Z
+            self.character_position[0] + self.camera_offset[0],
+            self.character_position[1] + self.camera_offset[1],
+            self.character_position[2] + self.camera_offset[2]
         ]
         self.rig.set_position(camera_position)
 
-        # Update planets' positions to simulate orbital motion and their rotation on their own axis
+        # Update planets
         for i, planet in enumerate(self.planets):
-            # Update the orbital position using the orbital speed
-            angle = self.planet_orbits[i] * self.delta_time  # Adjust the speed with delta_time
-            new_x = self.planet_distances[i] * math.cos(angle)  # Orbital motion on X-axis
-            new_z = self.planet_distances[i] * math.sin(angle)  # Orbital motion on Z-axis
-            planet.set_position([new_x, 0, new_z])  # Update position in orbit
-            
-            # Optional: Add self-rotation (planet rotating on its own axis) if you want it
-            planet.rotate_y(self.planet_orbits[i] * 100 * self.delta_time)  # Rotate around Y-axis for spinning effect
+            angle = self.planet_orbits[i] * self.delta_time
+            new_x = self.planet_distances[i] * math.cos(angle)
+            new_z = self.planet_distances[i] * math.sin(angle)
+            planet.set_position([new_x, 0, new_z])
+            planet.rotate_y(self.planet_orbits[i] * 100 * self.delta_time)
 
-        # Update the rig and render the scene
+        # Update rig and render
         self.rig.update(self.input, self.delta_time)
         self.renderer.render(self.scene, self.camera)
 
-# Instantiate this class and run the program
+# Run the program
 Example(screen_size=[1100, 700]).run()
