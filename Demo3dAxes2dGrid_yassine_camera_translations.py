@@ -2,6 +2,7 @@
 import math
 import pathlib
 import sys
+import time  # Import time for oscillation
 
 # Get the package directory
 package_dir = str(pathlib.Path(__file__).resolve().parents[2])
@@ -21,7 +22,7 @@ from py3d.extras.grid import GridHelper
 from py3d.extras.movement_rig import MovementRig
 from py3d.material.texture import TextureMaterial  # Import TextureMaterial
 from py3d.core_ext.texture import Texture  # Import Texture for loading images
-
+from py3d.geometry.sphere import SphereGeometry  # Import SphereGeometry
 import pygame  # Import Pygame for audio
 
 
@@ -64,39 +65,12 @@ class Example(Base):
         self.mesh2.set_position(box2_position)
         self.scene.add(self.mesh2)
 
-        # # Skybox setup
-        # sky_geometry = BoxGeometry(500, 500, 500)  # Large box for the sky
-        # sky_material = TextureMaterial(texture=Texture(file_name="skky.png"))  # Load the sky texture
-        # self.sky = Mesh(sky_geometry, sky_material)
-        # self.sky.set_position([0, 0, 0])  # Center the sky
-        # self.scene.add(self.sky)  # Add the sky mesh to the scene
-
-
-        ## for a sphere container rather then a box
-        from py3d.geometry.sphere import SphereGeometry  # Import SphereGeometry
-
-        # Replace this with the correct import path for SphereGeometry in your library
-        from py3d.geometry.sphere import SphereGeometry  
-
         # Skysphere setup
         sky_geometry = SphereGeometry(radius=850)  # Define the skysphere with a radius
         sky_material = TextureMaterial(texture=Texture(file_name="skky.png"))  # Load the sky texture
         self.sky = Mesh(sky_geometry, sky_material)
         self.sky.set_position([0, 0, 0])  # Center the skysphere
         self.scene.add(self.sky)  # Add the skysphere to the scene
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         # Add axes and grid helpers
         axes = AxesHelper(axis_length=2)
@@ -112,8 +86,11 @@ class Example(Base):
         # Maintain the current position of the rig
         self.current_position = [0, 4, 15]
 
+        # Initialize time for oscillation
+        self.time_start = time.time()
+
     def update(self):
-        # Handle camera position changes based on keyboard input
+        # Handle manual movement input
         if self.input.is_key_pressed('up'):
             self.current_position[1] += 0.1  # Move up
         elif self.input.is_key_pressed('down'):
@@ -129,8 +106,25 @@ class Example(Base):
         elif self.input.is_key_pressed('o'):
             self.current_position[2] += 0.1  # Zoom out
 
+        # Time-based oscillation
+        elapsed_time = time.time() - self.time_start
+        oscillation_amplitude = 0.5  # Amplitude of floating effect
+        oscillation_speed = 1.0  # Speed of oscillation
+        floating_offset = [
+            0.5 * math.sin(0.5 * elapsed_time),  # Horizontal drift (optional)
+            oscillation_amplitude * math.sin(oscillation_speed * elapsed_time),  # Vertical float
+            0  # No oscillation in the Z-axis
+        ]
+
+        # Combine base position with floating effect
+        effective_position = [
+            self.current_position[0] + floating_offset[0],
+            self.current_position[1] + floating_offset[1],
+            self.current_position[2] + floating_offset[2],
+        ]
+
         # Update the rig position
-        self.rig.set_position(self.current_position)
+        self.rig.set_position(effective_position)
 
         # Update the rig and render the scene
         self.rig.update(self.input, self.delta_time)
