@@ -8,9 +8,7 @@ import wave
 import threading
 import speech_recognition as sr
 import google.generativeai as genai
-import os
 import time
-from dotenv import load_dotenv
 
 # Get the package directory
 package_dir = str(pathlib.Path(__file__).resolve().parents[2])
@@ -220,9 +218,9 @@ class Example(Base):
                         if self.planet_textures[planet_name] == 'earth.jpg':
                             # Use the stored planet position from initialization
                             self.earth_target = [
-                                1.2 * self.planet_distances[i] * math.cos(i),
+                                1.2 * self.planet_distances[i+1] * math.cos(i),
                                 0,
-                                1.2 * self.planet_distances[i] * math.sin(i)
+                                1.2 * self.planet_distances[i+1] * math.sin(i)
                             ]
                             self.moving_to_earth = True
                             print(f"Moving to Earth at position: {self.earth_target}")
