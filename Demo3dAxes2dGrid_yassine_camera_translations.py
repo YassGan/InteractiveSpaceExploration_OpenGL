@@ -46,6 +46,20 @@ class Example(Base):
         
         pygame.init()
 
+
+        pygame.mixer.init()  # Initialize Pygame's mixer
+        
+        # Load and play background music
+        try:
+          pygame.mixer.music.load('audio.mp3') # Load your music file
+          pygame.mixer.music.play(-1) # Play it in an infinite loop
+        except pygame.error as e:
+          print(f"Could not load background music: {e}")
+
+
+
+
+
         # Setup the movement rig for the camera
         self.rig = MovementRig() #This allows the camera to move
         self.rig.add(self.camera)
@@ -140,8 +154,8 @@ class Example(Base):
             planet_material = TextureMaterial(texture=Texture(file_name=self.planet_textures[planet_name]))
             planet = Mesh(planet_geometry, planet_material)
             
-            x_pos = 1.2 * self.planet_distances[i] * math.cos(i)
-            z_pos = 1.2 * self.planet_distances[i] * math.sin(i)
+            x_pos = 1.2 * self.planet_distances[i] 
+            z_pos = 1.2 * self.planet_distances[i] 
             planet.set_position([x_pos, 0, z_pos])
             self.planets.append(planet)
             self.scene.add(planet)
@@ -210,7 +224,8 @@ class Example(Base):
                 text = recognizer.recognize_google(audio_data)
                 self.transcribed_text = text.lower()  # Convert to lowercase for easier matching
                 print(f"Transcribed Text: {text}")
-                
+                pygame.mixer.music.play(-1) # Play it in an infinite loop
+
                 # Check if 'earth' is in the transcribed text
                 if 'earth' in self.transcribed_text:
                     # Find the Earth planet
@@ -218,9 +233,9 @@ class Example(Base):
                         if self.planet_textures[planet_name] == 'earth.jpg':
                             # Use the stored planet position from initialization
                             self.earth_target = [
-                                1.2 * self.planet_distances[i+1] * math.cos(i),
+                                1.2 * self.planet_distances[i+1],
                                 0,
-                                1.2 * self.planet_distances[i+1] * math.sin(i)
+                                1.2 * self.planet_distances[i+1] 
                             ]
                             self.moving_to_earth = True
                             print(f"Moving to Earth at position: {self.earth_target}")
@@ -241,6 +256,7 @@ class Example(Base):
                 return # Skip update if paused
             
             if self.input.is_key_pressed('y'):
+                pygame.mixer.music.stop()
                 self.start_recording()
 
             # New logic for moving to Earth
@@ -268,12 +284,11 @@ class Example(Base):
                     self.character.set_position(self.character_position)
                     
                     # Check if close to Earth (within a small threshold)
-                    if magnitude < 5:  # Increased threshold for easier targeting
+                    if magnitude < 1:  # Increased threshold for easier targeting
                         print("Reached Earth!")
                         self.moving_to_earth = False
                         self.earth_target = None
 
-            # (Rest of the update method remains the same)
 
             # Update moving boxes
             for i, box in enumerate(self.moving_boxes):
@@ -292,9 +307,9 @@ class Example(Base):
                 box.set_position(self.box_positions[i])
                 
                 # Apply rotation
-                box.rotate_x(self.box_rotations[i][0])
-                box.rotate_y(self.box_rotations[i][1])
-                box.rotate_z(self.box_rotations[i][2])
+                # box.rotate_x(self.box_rotations[i][0])
+                # box.rotate_y(self.box_rotations[i][1])
+                # box.rotate_z(self.box_rotations[i][2])
 
             # Handle speed boost
             if self.input.is_key_pressed('r'):
